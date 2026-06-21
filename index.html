@@ -306,4 +306,26 @@ el('dl').onclick=async()=>{
         btn.textContent=`作成中… ${i+1}/${total}`;
         const r=valid[i]; const buf=await buildOne(r);
         let nm=`${safe(comp)}_${safe(md)}_${safe(r.home)}vs${safe(r.away)}.xlsx`;
-        if(seen[nm]){seen[nm]++; nm=nm.replace(
+        if(seen[nm]){seen[nm]++; nm=nm.replace('.xlsx',`_${seen[nm]}.xlsx`);} else seen[nm]=1;
+        zip.file(nm, buf);
+      }
+      btn.textContent='ZIP作成中…';
+      const blob=await zip.generateAsync({type:'blob'});
+      dl(blob, `kofa-matchsheet_${safe(comp)}_${safe(md)}.zip`);
+    }
+    toast(total+'試合を作成しました');
+  }catch(err){console.error(err); toast('エラー: '+err.message);}
+  btn.disabled=false; btn.textContent='Excelをまとめてダウンロード';
+};
+
+let toastT;
+function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+function renderAll(){
+  fillCommon(); renderTeamTable(); renderCompTable();
+  if(!rows.length){ addRow({home:'ドルトムント',away:'ベンフィカ'}); } else { renderRows(); }
+}
+renderAll();
+</script>
+</body>
+</html>

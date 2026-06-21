@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>試合記録フォーマット作成</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{--blue:#2F5496;--blue2:#3b69bf;--bg:#f4f6fb;--line:#d8dee9;--ok:#548235;--warn:#c55a11;}
 *{box-sizing:border-box}
@@ -15,50 +16,43 @@ header p{margin:4px 0 0;font-size:12px;opacity:.85}
 .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:0 12px}
 .tab{padding:12px 16px;cursor:pointer;font-size:14px;font-weight:600;color:#667;border-bottom:3px solid transparent}
 .tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.wrap{max-width:860px;margin:0 auto;padding:18px}
+.wrap{max-width:980px;margin:0 auto;padding:18px}
 .page{display:none}.page.active{display:block}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:680px){.grid{grid-template-columns:1fr}}
 .field{display:flex;flex-direction:column;gap:5px}
-.field.full{grid-column:1/-1}
 label{font-size:12px;font-weight:700;color:var(--blue)}
-select,input[type=text],input[type=date],input[type=time]{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fff;width:100%}
+select,input[type=text],input[type=date],input[type=time],textarea{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fff;width:100%;font-family:inherit}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .card h2{margin:0 0 12px;font-size:14px;color:var(--blue)}
 .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
 .badge.euro{background:#e7efff;color:var(--blue)}
 .badge.dom{background:#eaf6e6;color:var(--ok)}
-.neutral-box{margin-top:10px;padding:12px;border:1px dashed var(--warn);border-radius:10px;background:#fff8f2;display:none}
-.neutral-box.show{display:block}
-.chk{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--warn);cursor:pointer}
-.preview{background:#0f1b33;color:#fff;border-radius:12px;padding:18px;margin-top:16px}
-.preview .ttl{font-size:13px;opacity:.7}
-.preview .big{font-size:18px;font-weight:700;margin:2px 0 12px}
-.prow{display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.12);padding:7px 0;font-size:14px}
-.prow span:first-child{opacity:.65}
-.prow span:last-child{font-weight:600;text-align:right}
 .dlbtn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:10px;background:var(--ok);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
 .dlbtn:hover{filter:brightness(1.05)}
 .dlbtn:disabled{background:#9bb;cursor:default}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-th,td{border:1px solid var(--line);padding:5px 6px;text-align:left}
-th{background:#eef2fa;color:var(--blue);position:sticky;top:0}
-td input,td select{padding:5px;font-size:13px;border:1px solid #e2e7f0;border-radius:5px}
-.tbl-scroll{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+th,td{border:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:middle}
+th{background:#eef2fa;color:var(--blue);position:sticky;top:0;z-index:1}
+td input,td select{padding:6px;font-size:13px;border:1px solid #e2e7f0;border-radius:6px}
+.tbl-scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
 .btn{padding:8px 14px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}
 .btn.primary{background:var(--blue);color:#fff}
 .btn.danger{border-color:#c0392b;color:#c0392b}
-.rowbtns{display:flex;gap:8px;margin:12px 0}
+.rowbtns{display:flex;gap:8px;margin:12px 0 0;flex-wrap:wrap}
 .del{color:#c0392b;cursor:pointer;font-weight:700;text-align:center}
+.idx{text-align:center;color:#889;font-weight:700}
 .hint{font-size:12px;color:#778;margin:6px 0 0}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;transition:.3s;pointer-events:none}
+details{margin-top:12px}summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--blue)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:9}
 .toast.show{opacity:1}
+.colnum{width:34px}.colvenue{min-width:230px}
 </style>
 </head>
 <body>
 <header>
   <h1>⚽ 試合記録フォーマット作成</h1>
-  <p>大会・チームを選ぶと会場・地名が自動で入り、スタメン書式のExcelをダウンロードできます。</p>
+  <p>共通設定を選び、対戦を何試合でも入力 → まとめてExcel（スタメン書式）をダウンロードできます。</p>
 </header>
 <div class="tabs">
   <div class="tab active" data-page="make">フォーマット作成</div>
@@ -69,40 +63,39 @@ td input,td select{padding:5px;font-size:13px;border:1px solid #e2e7f0;border-ra
   <!-- ===== MAKE ===== -->
   <div class="page active" id="page-make">
     <div class="card">
+      <h2>① 共通設定</h2>
       <div class="grid">
-        <div class="field"><label>シーズン</label><select id="f-season"></select></div>
-        <div class="field"><label>大会名 <span id="comp-badge"></span></label><select id="f-comp"></select></div>
-        <div class="field"><label>第●節</label><select id="f-md"></select></div>
-        <div class="field"><label>開催日</label><input type="date" id="f-date"></div>
-        <div class="field"><label>ホームチーム</label><select id="f-home"></select></div>
-        <div class="field"><label>アウェイチーム</label><select id="f-away"></select></div>
-        <div class="field"><label>キックオフ</label><input type="time" id="f-ko" value="21:00"></div>
-        <div class="field"></div>
-      </div>
-      <div style="margin-top:12px">
-        <label class="chk"><input type="checkbox" id="f-neutral"> 中立地で開催する</label>
-        <div class="neutral-box" id="neutral-box">
-          <div class="grid">
-            <div class="field full"><label>中立地スタジアム名</label><input type="text" id="f-nstad" placeholder="例：ヴェンブリー・スタジアム"></div>
-            <div class="field full"><label>中立地 地名</label><input type="text" id="f-nloc" placeholder="例：イングランド・ロンドン"></div>
-          </div>
-        </div>
+        <div class="field"><label>シーズン</label><select id="c-season"></select></div>
+        <div class="field"><label>大会名 <span id="comp-badge"></span></label><select id="c-comp"></select></div>
+        <div class="field"><label>第●節</label><select id="c-md"></select></div>
       </div>
     </div>
 
-    <div class="preview" id="preview">
-      <div class="ttl">大会名（左上表示）</div>
-      <div class="big" id="pv-title">—</div>
-      <div class="prow"><span>第●節</span><span id="pv-md">—</span></div>
-      <div class="prow"><span>開催日</span><span id="pv-date">—</span></div>
-      <div class="prow"><span>キックオフ</span><span id="pv-ko">—</span></div>
-      <div class="prow"><span>ホーム</span><span id="pv-home">—</span></div>
-      <div class="prow"><span>アウェイ</span><span id="pv-away">—</span></div>
-      <div class="prow"><span>会場（地名）</span><span id="pv-venue">—</span></div>
-      <div class="prow"><span>地名表記</span><span id="pv-loc">—</span></div>
+    <div class="card">
+      <h2>② 対戦リスト（何試合でも）</h2>
+      <div class="tbl-scroll">
+        <table id="match-table">
+          <thead><tr>
+            <th class="colnum">#</th><th>開催日</th><th>KO</th><th>ホーム</th><th>アウェイ</th>
+            <th class="colvenue">会場（空欄＝自動／中立地は手入力）</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="rowbtns">
+        <button class="btn primary" id="add-row">＋ 行を追加</button>
+        <button class="btn" id="clear-rows">クリア</button>
+      </div>
+      <details>
+        <summary>まとめて貼り付けて追加（1行に1試合）</summary>
+        <p class="hint">「ホーム ［タブ/カンマ］ アウェイ ［タブ/カンマ］ 開催日(任意 例 2025-09-16) ［タブ/カンマ］ KO(任意 例 21:00)」を1行に1試合で貼り付けてください。</p>
+        <textarea id="paste-box" rows="4" placeholder="ドルトムント,ベンフィカ,2025-09-16,21:00&#10;バルセロナ,パリ・サンジェルマン,2025-09-16,21:00"></textarea>
+        <div class="rowbtns"><button class="btn" id="paste-add">貼り付けて追加</button></div>
+      </details>
     </div>
-    <button class="dlbtn" id="dl">Excelをダウンロード</button>
-    <p class="hint">※ ダウンロードされるExcelの「スタメン」シートに見出しが入ります。選手名・審判などはExcelで記入してください。</p>
+
+    <button class="dlbtn" id="dl">Excelをまとめてダウンロード</button>
+    <p class="hint">※ 2試合以上はZIP、1試合はそのままExcelでダウンロード。各ファイルの「スタメン」シートに見出しが入ります（選手名・審判はExcelで記入）。</p>
   </div>
 
   <!-- ===== DB ===== -->
@@ -138,6 +131,7 @@ const WD = ['日','月','火','水','木','金','土'];
 const LS = 'matchrecord_v1';
 
 let state = load();
+let rows = [];
 function load(){
   try{const s=JSON.parse(localStorage.getItem(LS)); if(s&&s.teams&&s.competitions) return s;}catch(e){}
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
@@ -145,7 +139,6 @@ function load(){
 function save(){localStorage.setItem(LS, JSON.stringify(state)); }
 function resetData(){ if(confirm('チーム・大会を初期データに戻します。よろしいですか？')){ state=JSON.parse(JSON.stringify(DEFAULT_DATA)); save(); renderAll(); toast('初期データに戻しました'); } }
 
-// ---- tabs ----
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
@@ -153,70 +146,98 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.getElementById('page-'+t.dataset.page).classList.add('active');
 });
 
-// ---- helpers ----
 function el(id){return document.getElementById(id);}
 function opt(v,t){const o=document.createElement('option');o.value=v;o.textContent=t||v;return o;}
 function compType(name){const c=state.competitions.find(c=>c.name===name);return c?c.type:'欧州カップ戦';}
 function teamObj(name){return state.teams.find(t=>t.name===name);}
+function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
-function fillSelects(){
-  const se=el('f-season'); se.innerHTML=''; state.seasons.forEach(s=>se.appendChild(opt(s)));
-  const co=el('f-comp'); co.innerHTML=''; state.competitions.forEach(c=>co.appendChild(opt(c.name)));
-  const md=el('f-md'); md.innerHTML=''; DEFAULT_DATA.matchdays.forEach(m=>md.appendChild(opt(m)));
-  ['f-home','f-away'].forEach(id=>{
-    const s=el(id); const prev=s.value; s.innerHTML='';
-    const byComp={};
-    state.teams.forEach(t=>{(byComp[t.comp]=byComp[t.comp]||[]).push(t);});
-    Object.keys(byComp).forEach(comp=>{
-      const g=document.createElement('optgroup'); g.label=comp;
-      byComp[comp].forEach(t=>g.appendChild(opt(t.name)));
-      s.appendChild(g);
-    });
-    if(prev) s.value=prev;
+function teamOptions(selected){
+  const byComp={}; state.teams.forEach(t=>{(byComp[t.comp]=byComp[t.comp]||[]).push(t);});
+  let html='<option value=""></option>';
+  Object.keys(byComp).forEach(comp=>{
+    html+=`<optgroup label="${esc(comp)}">`;
+    byComp[comp].forEach(t=>{html+=`<option ${t.name===selected?'selected':''}>${esc(t.name)}</option>`;});
+    html+='</optgroup>';
   });
+  return html;
 }
 
-function computeVenue(){
-  const comp=el('f-comp').value, cat=compType(comp);
-  const home=el('f-home').value, t=teamObj(home)||{};
-  const locName = cat==='国内リーグ' ? '①都市名のみ' : '②国名＋都市名';
-  let venue='';
-  if(el('f-neutral').checked){
-    const ns=el('f-nstad').value.trim(), nl=el('f-nloc').value.trim();
-    if(ns) venue = ns + (nl?('（'+nl+'）'):'');
-  } else {
-    const stad = cat==='国内リーグ' ? (t.normal||'') : (t.euro||t.normal||'');
-    const loc = cat==='国内リーグ' ? (t.city||'') : ((t.country||'')+'・'+(t.city||''));
-    if(stad) venue = stad+'（'+loc+'）';
-  }
-  return {venue, locName, cat};
+// auto venue for a home team using common competition
+function autoVenue(home){
+  const cat=compType(el('c-comp').value), t=teamObj(home);
+  if(!t) return '';
+  const stad = cat==='国内リーグ' ? (t.normal||'') : (t.euro||t.normal||'');
+  const loc = cat==='国内リーグ' ? (t.city||'') : ((t.country||'')+'・'+(t.city||''));
+  return stad ? stad+'（'+loc+'）' : '';
 }
-function fmtDate(){
-  const v=el('f-date').value; if(!v) return '';
-  const d=new Date(v+'T00:00:00');
+function fmtDate(v){
+  if(!v) return '';
+  const d=new Date(v+'T00:00:00'); if(isNaN(d)) return '';
   const mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
   return d.getFullYear()+'年'+mm+'月'+dd+'日('+WD[d.getDay()]+')';
 }
-function refreshPreview(){
-  const comp=el('f-comp').value, season=el('f-season').value;
-  const {venue,locName,cat}=computeVenue();
-  el('comp-badge').innerHTML = cat==='国内リーグ' ? '<span class="badge dom">国内リーグ</span>' : '<span class="badge euro">欧州カップ戦</span>';
-  el('pv-title').textContent = (comp||'')+(season||'') || '—';
-  el('pv-md').textContent = el('f-md').value||'—';
-  el('pv-date').textContent = fmtDate()||'—';
-  el('pv-ko').textContent = el('f-ko').value||'—';
-  el('pv-home').textContent = el('f-home').value||'—';
-  el('pv-away').textContent = el('f-away').value||'—';
-  el('pv-venue').textContent = venue||'—';
-  el('pv-loc').textContent = locName;
+
+function fillCommon(){
+  const se=el('c-season'); se.innerHTML=''; state.seasons.forEach(s=>se.appendChild(opt(s)));
+  const co=el('c-comp'); co.innerHTML=''; state.competitions.forEach(c=>co.appendChild(opt(c.name)));
+  const md=el('c-md'); md.innerHTML=''; DEFAULT_DATA.matchdays.forEach(m=>md.appendChild(opt(m)));
+  if([...se.options].some(o=>o.value==='25/26')) se.value='25/26';
+  if([...co.options].some(o=>o.value==='UEFAチャンピオンズリーグ')) co.value='UEFAチャンピオンズリーグ';
+  updateBadge();
 }
+function updateBadge(){
+  const cat=compType(el('c-comp').value);
+  el('comp-badge').innerHTML = cat==='国内リーグ' ? '<span class="badge dom">国内リーグ</span>' : '<span class="badge euro">欧州カップ戦</span>';
+}
+
+function renderRows(){
+  const tb=el('match-table').querySelector('tbody'); tb.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="idx">${i+1}</td>
+      <td><input type="date" data-i="${i}" data-k="date" value="${esc(r.date)}"></td>
+      <td><input type="time" data-i="${i}" data-k="ko" value="${esc(r.ko)}" style="width:96px"></td>
+      <td><select data-i="${i}" data-k="home">${teamOptions(r.home)}</select></td>
+      <td><select data-i="${i}" data-k="away">${teamOptions(r.away)}</select></td>
+      <td><input type="text" data-i="${i}" data-k="venue" value="${esc(r.venue)}" placeholder="${esc(autoVenue(r.home))}"></td>
+      <td class="del" data-del="${i}">✕</td>`;
+    tb.appendChild(tr);
+  });
+}
+function updateVenuePlaceholders(){
+  el('match-table').querySelectorAll('input[data-k="venue"]').forEach(inp=>{
+    inp.placeholder = autoVenue(rows[+inp.dataset.i].home);
+  });
+}
+function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venue:''}, data||{})); renderRows(); }
+
+el('match-table').addEventListener('input',e=>{
+  const i=e.target.dataset.i,k=e.target.dataset.k; if(i==null)return;
+  rows[i][k]=e.target.value;
+  if(k==='home') e.target.closest('tr').querySelector('input[data-k="venue"]').placeholder=autoVenue(e.target.value);
+});
+el('match-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){rows.splice(+e.target.dataset.del,1); renderRows();}});
+el('add-row').onclick=()=>addRow();
+el('clear-rows').onclick=()=>{ if(confirm('対戦リストを全て消去しますか？')){ rows=[]; addRow(); } };
+el('c-comp').addEventListener('change',()=>{updateBadge(); updateVenuePlaceholders();});
+el('paste-add').onclick=()=>{
+  const txt=el('paste-box').value.trim(); if(!txt) return;
+  let n=0;
+  txt.split(/\r?\n/).forEach(line=>{
+    const p=line.split(/[\t,]/).map(s=>s.trim());
+    if(!p[0]) return;
+    addRow({home:p[0]||'',away:p[1]||'',date:p[2]||'',ko:p[3]||'21:00'}); n++;
+  });
+  el('paste-box').value=''; updateVenuePlaceholders(); toast(n+'試合を追加しました');
+};
 
 // ---- DB tables ----
 function renderTeamTable(){
   const tb=el('team-table').querySelector('tbody'); tb.innerHTML='';
   state.teams.forEach((t,i)=>{
     const tr=document.createElement('tr');
-    const compSel = state.competitions.map(c=>`<option ${c.name===t.comp?'selected':''}>${c.name}</option>`).join('');
+    const compSel = state.competitions.map(c=>`<option ${c.name===t.comp?'selected':''}>${esc(c.name)}</option>`).join('');
     tr.innerHTML=`<td><select data-i="${i}" data-k="comp">${compSel}</select></td>
       <td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td>
       <td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td>
@@ -237,68 +258,52 @@ function renderCompTable(){
     tb.appendChild(tr);
   });
 }
-function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-
-el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save(); fillSelects(); refreshPreview();}});
-el('team-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); fillSelects(); refreshPreview();}});
-el('comp-table').addEventListener('input',e=>{const i=e.target.dataset.ci,k=e.target.dataset.k; if(i!=null){state.competitions[i][k]=e.target.value; save(); fillSelects(); renderTeamTable(); refreshPreview();}});
-el('comp-table').addEventListener('click',e=>{if(e.target.dataset.delc!=null){state.competitions.splice(+e.target.dataset.delc,1); save(); renderCompTable(); fillSelects(); refreshPreview();}});
-el('add-team').onclick=()=>{state.teams.push({comp:(state.competitions[0]&&state.competitions[0].name)||'',name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); renderTeamTable(); fillSelects();};
-el('add-comp').onclick=()=>{state.competitions.push({name:'新規大会',type:'国内リーグ'}); save(); renderCompTable(); fillSelects();};
+el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save();}});
+el('team-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); renderRows();}});
+el('comp-table').addEventListener('input',e=>{const i=e.target.dataset.ci,k=e.target.dataset.k; if(i!=null){state.competitions[i][k]=e.target.value; save(); fillCommon();}});
+el('comp-table').addEventListener('click',e=>{if(e.target.dataset.delc!=null){state.competitions.splice(+e.target.dataset.delc,1); save(); renderCompTable(); fillCommon();}});
+el('add-team').onclick=()=>{state.teams.push({comp:(state.competitions[0]&&state.competitions[0].name)||'',name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); renderTeamTable();};
+el('add-comp').onclick=()=>{state.competitions.push({name:'新規大会',type:'国内リーグ'}); save(); renderCompTable(); fillCommon();};
 el('reset').onclick=resetData;
 
-// ---- form events ----
-['f-season','f-comp','f-md','f-home','f-away','f-date','f-ko','f-nstad','f-nloc'].forEach(id=>{
-  el(id).addEventListener('input',refreshPreview);
-});
-el('f-neutral').addEventListener('change',()=>{el('neutral-box').classList.toggle('show',el('f-neutral').checked); refreshPreview();});
-
-// ---- download ----
+// ---- generate ----
 function b64ToBuf(b64){const bin=atob(b64);const len=bin.length;const bytes=new Uint8Array(len);for(let i=0;i<len;i++)bytes[i]=bin.charCodeAt(i);return bytes.buffer;}
 function safe(s){return (s||'').replace(/[\\/:*?"<>|]/g,'').slice(0,40);}
-el('dl').onclick=async()=>{
-  const btn=el('dl'); btn.disabled=true; btn.textContent='作成中…';
-  try{
-    const wb=new ExcelJS.Workbook();
-    await wb.xlsx.load(b64ToBuf(TEMPLATE_B64));
-    ['入力','日程DB'].forEach(n=>{const ws=wb.getWorksheet(n); if(ws) wb.removeWorksheet(ws.id);});
-    const st=wb.getWorksheet('スタメン');
-    const comp=el('f-comp').value, season=el('f-season').value;
-    const {venue}=computeVenue();
-    st.getCell('B1').value=comp+season;
-    st.getCell('L1').value=el('f-md').value;
-    st.getCell('R1').value=fmtDate();
-    st.getCell('X1').value=el('f-ko').value;
-    st.getCell('B5').value=el('f-home').value;
-    st.getCell('Z5').value=el('f-away').value;
-    st.getCell('M5').value=venue;
-    const db=wb.getWorksheet('チームDB');
-    const maxRows=Math.max(state.teams.length,36);
-    for(let i=0;i<maxRows;i++){
-      const r=3+i, t=state.teams[i];
-      ['A','B','C','D','E','F'].forEach((c,ci)=>{ db.getCell(c+r).value = t?[t.comp,t.name,t.country,t.city,t.normal,t.euro][ci]:null; });
-    }
-    const out=await wb.xlsx.writeBuffer();
-    const blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download=`${safe(comp)}_${safe(el('f-md').value)}_${safe(el('f-home').value)}vs${safe(el('f-away').value)}.xlsx`;
-    a.click(); URL.revokeObjectURL(a.href);
-    toast('Excelをダウンロードしました');
-  }catch(err){console.error(err); toast('エラー: '+err.message);}
-  btn.disabled=false; btn.textContent='Excelをダウンロード';
-};
-
-let toastT;
-function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
-
-function renderAll(){fillSelects();renderTeamTable();renderCompTable();
-  if([...el('f-comp').options].some(o=>o.value==='UEFAチャンピオンズリーグ'))el('f-comp').value='UEFAチャンピオンズリーグ';
-  if([...el('f-season').options].some(o=>o.value==='25/26'))el('f-season').value='25/26';
-  if([...el('f-home').options].some(o=>o.value==='ドルトムント'))el('f-home').value='ドルトムント';
-  if([...el('f-away').options].some(o=>o.value==='ベンフィカ'))el('f-away').value='ベンフィカ';
-  refreshPreview();
+async function buildOne(r){
+  const wb=new ExcelJS.Workbook();
+  await wb.xlsx.load(b64ToBuf(TEMPLATE_B64));
+  ['入力','日程DB'].forEach(n=>{const ws=wb.getWorksheet(n); if(ws) wb.removeWorksheet(ws.id);});
+  const st=wb.getWorksheet('スタメン');
+  const comp=el('c-comp').value, season=el('c-season').value, md=el('c-md').value;
+  const venue = (r.venue&&r.venue.trim()) ? r.venue.trim() : autoVenue(r.home);
+  st.getCell('B1').value=comp+season;
+  st.getCell('L1').value=md;
+  st.getCell('R1').value=fmtDate(r.date);
+  st.getCell('X1').value=r.ko;
+  st.getCell('B5').value=r.home;
+  st.getCell('Z5').value=r.away;
+  st.getCell('M5').value=venue;
+  const db=wb.getWorksheet('チームDB');
+  const maxRows=Math.max(state.teams.length,36);
+  for(let i=0;i<maxRows;i++){const rr=3+i,t=state.teams[i];['A','B','C','D','E','F'].forEach((c,ci)=>{db.getCell(c+rr).value=t?[t.comp,t.name,t.country,t.city,t.normal,t.euro][ci]:null;});}
+  return await wb.xlsx.writeBuffer();
 }
-renderAll();
-</script>
-</body>
-</html>
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+el('dl').onclick=async()=>{
+  const valid=rows.filter(r=>r.home&&r.away);
+  if(!valid.length){toast('ホームとアウェイを入力してください');return;}
+  const btn=el('dl'); btn.disabled=true; const total=valid.length;
+  const comp=el('c-comp').value, md=el('c-md').value;
+  try{
+    if(total===1){
+      btn.textContent='作成中…';
+      const buf=await buildOne(valid[0]);
+      dl(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+        `${safe(comp)}_${safe(md)}_${safe(valid[0].home)}vs${safe(valid[0].away)}.xlsx`);
+    } else {
+      const zip=new JSZip(); const seen={};
+      for(let i=0;i<total;i++){
+        btn.textContent=`作成中… ${i+1}/${total}`;
+        const r=valid[i]; const buf=await buildOne(r);
+        let nm=`${safe(comp)}_${safe(md)}_${safe(r.home)}vs${safe(r.away)}.xlsx`;
+        if(seen[nm]){seen[nm]++; nm=nm.replace(

@@ -150,7 +150,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <input type="text" id="team-search" placeholder="🔍 チーム名で検索（二重登録の確認）" style="margin-top:10px">
       <div class="tbl-scroll">
         <table id="team-table">
-          <thead><tr><th data-sort="name" style="width:20%;cursor:pointer">チーム名 <span id="ar-name"></span></th><th data-sort="country" style="width:12%;cursor:pointer">国 <span id="ar-country"></span></th><th style="width:14%">都市</th><th style="width:24%">ホームスタジアム①</th><th style="width:24%">ホームスタジアム②</th><th style="width:6%"></th></tr></thead>
+          <thead><tr><th data-sort="name" style="width:15%;cursor:pointer">チーム名 <span id="ar-name"></span></th><th data-sort="country" style="width:9%;cursor:pointer">国 <span id="ar-country"></span></th><th style="width:11%">都市</th><th style="width:29.5%">ホームスタジアム①</th><th style="width:29.5%">ホームスタジアム②</th><th style="width:6%"></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -244,9 +244,10 @@ el('drop').addEventListener('dragover',e=>{e.preventDefault();});
 el('drop').addEventListener('drop',e=>{e.preventDefault(); addFiles(e.dataTransfer.files);});
 
 // ---- DB tables ----
+function fitFont(inp){ let f=13; inp.style.fontSize=f+"px"; let g=0; while(inp.scrollWidth>inp.clientWidth && f>9 && g<6){ f--; g++; inp.style.fontSize=f+"px"; } }
 function updateSortArrows(){ const n=el('ar-name'),c=el('ar-country'); if(n)n.textContent=teamSort.key==='name'?(teamSort.asc?'▲':'▼'):''; if(c)c.textContent=teamSort.key==='country'?(teamSort.asc?'▲':'▼'):''; }
-function renderTeamTable(){ updateSortArrows(); const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); }
-el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save();}});
+function renderTeamTable(){ updateSortArrows(); const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); tb.querySelectorAll('input[data-k="normal"],input[data-k="euro"]').forEach(fitFont); }
+el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save(); if(k==='normal'||k==='euro') fitFont(e.target);}});
 el('team-table').addEventListener('click',e=>{ const th=e.target.closest('th[data-sort]'); if(th){ const k=th.dataset.sort; teamSort.asc=(teamSort.key===k)?!teamSort.asc:true; teamSort.key=k; state.teams.sort((a,b)=>String(a[k]||'').localeCompare(String(b[k]||''),'ja')*(teamSort.asc?1:-1)); save(); renderTeamTable(); return; } if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); renderRows();} });
 el('add-team').onclick=()=>{state.teams.push({name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); el('team-search').value=''; renderTeamTable();};
 el('team-search').addEventListener('input',renderTeamTable);

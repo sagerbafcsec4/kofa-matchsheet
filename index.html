@@ -16,16 +16,16 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-.topbar{max-width:1000px;margin:0 auto;padding:24px 18px 4px;display:flex;align-items:center;gap:14px}
+.topbar{max-width:1240px;margin:0 auto;padding:24px 18px 4px;display:flex;align-items:center;gap:14px}
 .logo{width:46px;height:46px;border-radius:15px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-family:"Baloo 2","M PLUS Rounded 1c",sans-serif;font-weight:700;font-size:31px;line-height:1;padding-bottom:1px;box-shadow:0 10px 22px -8px rgba(33,115,70,.6);flex:none}
 .topbar h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em}
 .topbar p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
 .ver{margin-left:auto;align-self:flex-start;font-size:11px;font-weight:600;color:var(--g1);background:#fff;border:1px solid #d4e7dc;border-radius:999px;padding:5px 13px;white-space:nowrap}
-.tabs{max-width:1000px;margin:16px auto 0;padding:0 18px;display:flex;gap:8px;flex-wrap:wrap}
+.tabs{max-width:1240px;margin:16px auto 0;padding:0 18px;display:flex;gap:8px;flex-wrap:wrap}
 .tab{padding:9px 17px;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;transition:.15s}
 .tab:hover{border-color:#bfe0cd;color:var(--g1)}
 .tab.active{color:#fff;background:var(--grad);border-color:transparent;box-shadow:0 7px 16px -8px rgba(33,115,70,.7)}
-.wrap{max-width:1000px;margin:0 auto;padding:6px 18px 30px}
+.wrap{max-width:1240px;margin:0 auto;padding:6px 18px 30px}
 .page{display:none}.page.active{display:block}
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:680px){.grid{grid-template-columns:1fr}}
@@ -66,6 +66,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
 .upload{display:block;border:2px dashed #bcdcc8;border-radius:14px;padding:26px;text-align:center;color:#5a6b60;cursor:pointer;background:linear-gradient(180deg,#f7fcf9,#edf8f1);font-weight:600;transition:.15s}
 .upload:hover{border-color:var(--g2);background:#eafaf0}
 .colnum{width:34px}
+#team-table{table-layout:fixed}
 </style>
 </head>
 <body>
@@ -149,7 +150,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <input type="text" id="team-search" placeholder="🔍 チーム名で検索（二重登録の確認）" style="margin-top:10px">
       <div class="tbl-scroll">
         <table id="team-table">
-          <thead><tr><th>チーム名</th><th>国</th><th>都市</th><th>ホームスタジアム①</th><th>ホームスタジアム②</th><th></th></tr></thead>
+          <thead><tr><th data-sort="name" style="width:20%;cursor:pointer">チーム名 <span id="ar-name"></span></th><th data-sort="country" style="width:12%;cursor:pointer">国 <span id="ar-country"></span></th><th style="width:14%">都市</th><th style="width:24%">ホームスタジアム①</th><th style="width:24%">ホームスタジアム②</th><th style="width:6%"></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -169,6 +170,7 @@ function b64ToBuf(b64){const bin=atob(b64);const len=bin.length;const u=new Uint
 let state = load();
 let rows = [];
 let templates = [{name:'スタメン書式（標準・サンプル）', buf: b64ToBuf(SAMPLE_B64)}];
+let teamSort={key:'',asc:true};
 
 function load(){
   try{const s=JSON.parse(localStorage.getItem(LS)); if(s&&s.teams&&s.competitions) return s;}catch(e){}
@@ -242,9 +244,10 @@ el('drop').addEventListener('dragover',e=>{e.preventDefault();});
 el('drop').addEventListener('drop',e=>{e.preventDefault(); addFiles(e.dataTransfer.files);});
 
 // ---- DB tables ----
-function renderTeamTable(){ const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); }
+function updateSortArrows(){ const n=el('ar-name'),c=el('ar-country'); if(n)n.textContent=teamSort.key==='name'?(teamSort.asc?'▲':'▼'):''; if(c)c.textContent=teamSort.key==='country'?(teamSort.asc?'▲':'▼'):''; }
+function renderTeamTable(){ updateSortArrows(); const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); }
 el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save();}});
-el('team-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); renderRows();}});
+el('team-table').addEventListener('click',e=>{ const th=e.target.closest('th[data-sort]'); if(th){ const k=th.dataset.sort; teamSort.asc=(teamSort.key===k)?!teamSort.asc:true; teamSort.key=k; state.teams.sort((a,b)=>String(a[k]||'').localeCompare(String(b[k]||''),'ja')*(teamSort.asc?1:-1)); save(); renderTeamTable(); return; } if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); renderRows();} });
 el('add-team').onclick=()=>{state.teams.push({name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); el('team-search').value=''; renderTeamTable();};
 el('team-search').addEventListener('input',renderTeamTable);
 el('reset').onclick=resetData;

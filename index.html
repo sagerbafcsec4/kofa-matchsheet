@@ -93,7 +93,7 @@ details{margin-top:12px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <table id="match-table">
           <thead><tr>
             <th class="colnum">#</th><th>開催日</th><th>KO</th><th>ホーム</th><th>アウェイ</th>
-            <th>会場（空欄＝自動）</th><th>テンプレート</th><th></th>
+            <th>会場（空欄＝自動）</th><th>節（上書き）</th><th>シーズン（上書き）</th><th>テンプレート</th><th></th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -108,6 +108,15 @@ details{margin-top:12px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <textarea id="paste-box" rows="4" placeholder="ドルトムント,ベンフィカ,2025-09-16,21:00"></textarea>
         <div class="rowbtns"><button class="btn" id="paste-add">貼り付けて追加</button></div>
       </details>
+    </div>
+
+    <div class="card">
+      <h2>④ ファイル名の書式</h2>
+      <div class="grid">
+        <div class="field"><label>プリセット</label><select id="fn-preset"></select></div>
+        <div class="field" style="grid-column:2/4"><label>各ファイル名の書式</label><input type="text" id="fn-pattern"></div>
+      </div>
+      <p class="hint">使えるトークン：<span class="ph">{ホーム}</span><span class="ph">{アウェイ}</span><span class="ph">{大会}</span><span class="ph">{シーズン}</span><span class="ph">{節}</span><span class="ph">{開催日}</span><span class="ph">{日付}</span><span class="ph">{KO}</span>（{日付}＝20250916形式）。拡張子.xlsxは自動付与。</p>
     </div>
 
     <button class="dlbtn" id="dl">Excelをまとめてダウンロード</button>
@@ -212,6 +221,8 @@ function fillCommon(){
 }
 function updateBadge(){ const cat=compType(el('c-comp').value); el('comp-badge').innerHTML = cat==='国内リーグ' ? '<span class="badge dom">国内リーグ</span>' : '<span class="badge euro">欧州カップ戦</span>'; }
 
+function mdOptions(sel){ let h='<option value="">（共通）</option>'; DEFAULT_DATA.matchdays.forEach(m=>{h+=`<option ${m===sel?'selected':''}>${esc(m)}</option>`;}); return h; }
+function seasonOptions(sel){ let h='<option value="">（共通）</option>'; state.seasons.forEach(s=>{h+=`<option ${s===sel?'selected':''}>${esc(s)}</option>`;}); return h; }
 function tplOptions(sel){ let h='<option value="">（先頭）</option>'; templates.forEach((t,i)=>{h+=`<option value="${i}" ${String(sel)===String(i)?'selected':''}>${esc(t.name)}</option>`;}); return h; }
 function teamOptions(selected){
   const byComp={}; state.teams.forEach(t=>{(byComp[t.comp]=byComp[t.comp]||[]).push(t);});
@@ -233,13 +244,15 @@ function renderRows(){
       <td><select data-i="${i}" data-k="home">${teamOptions(r.home)}</select></td>
       <td><select data-i="${i}" data-k="away">${teamOptions(r.away)}</select></td>
       <td><input type="text" data-i="${i}" data-k="venue" value="${esc(r.venue)}" placeholder="${esc(autoVenue(r.home))}"></td>
+      <td><select data-i="${i}" data-k="md">${mdOptions(r.md)}</select></td>
+      <td><select data-i="${i}" data-k="season">${seasonOptions(r.season)}</select></td>
       <td><select data-i="${i}" data-k="tpl">${tplOptions(r.tpl)}</select></td>
       <td class="del" data-del="${i}">✕</td>`;
     tb.appendChild(tr);
   });
 }
 function updateVenuePlaceholders(){ el('match-table').querySelectorAll('input[data-k="venue"]').forEach(inp=>{ inp.placeholder=autoVenue(rows[+inp.dataset.i].home); }); }
-function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venue:'',tpl:''}, data||{})); renderRows(); }
+function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venue:'',tpl:'',md:'',season:''}, data||{})); renderRows(); }
 
 el('match-table').addEventListener('input',e=>{
   const i=e.target.dataset.i,k=e.target.dataset.k; if(i==null)return;
@@ -287,12 +300,15 @@ el('reset').onclick=resetData;
 // ---- generate ----
 function safe(s){return (s||'').replace(/[\\/:*?"<>|]/g,'').slice(0,40);}
 function valsFor(r){
-  const comp=el('c-comp').value, season=el('c-season').value, md=el('c-md').value;
+  const comp=el('c-comp').value;
+  const season=r.season||el('c-season').value;
+  const md=r.md||el('c-md').value;
   const th=teamObj(r.home)||{}, ta=teamObj(r.away)||{};
   const venue=(r.venue&&r.venue.trim())?r.venue.trim():autoVenue(r.home);
+  let ymd=''; if(r.date){const d=new Date(r.date+'T00:00:00'); if(!isNaN(d)) ymd=''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
   return {
     'ホーム':r.home,'アウェイ':r.away,'Home Team':r.home,'Away Team':r.away,
-    '大会':comp,'シーズン':season,'節':md,'開催日':fmtDate(r.date),'KO':r.ko||'','会場':venue,
+    '大会':comp,'シーズン':season,'節':md,'開催日':fmtDate(r.date),'日付':ymd,'KO':r.ko||'','会場':venue,
     'ホーム国':th.country||'','ホーム都市':th.city||'','ホームスタジアム':stadFor(th),
     'アウェイ国':ta.country||'','アウェイ都市':ta.city||'','アウェイスタジアム':stadFor(ta)
   };
@@ -307,6 +323,11 @@ async function fillTemplate(buf, vals){
   });});});
   return wb.xlsx.writeBuffer();
 }
+const FN_PRESETS=['{大会}_{節}_{ホーム}vs{アウェイ}','{日付}_{ホーム}-{アウェイ}','{節}_{ホーム}vs{アウェイ}','{ホーム}vs{アウェイ}'];
+function safeName(s){return (s||'').replace(/[\\/:*?"<>|]/g,'').slice(0,120);}
+function applyPattern(pat,vals){ return pat.replace(/\{([^}]+)\}/g,(m,k)=> (k.trim() in vals)? vals[k.trim()] : m); }
+function fileNameFor(r){ const pat=el('fn-pattern').value||FN_PRESETS[0]; let n=safeName(applyPattern(pat,valsFor(r))); if(!n) n='match'; return n+'.xlsx'; }
+function initFilename(){ const ps=el('fn-preset'); ps.innerHTML='<option value="">プリセットから選ぶ…</option>'; FN_PRESETS.forEach(p=>ps.appendChild(opt(p))); el('fn-pattern').value=state.fnPattern||FN_PRESETS[0]; ps.onchange=()=>{ if(ps.value){ el('fn-pattern').value=ps.value; state.fnPattern=ps.value; save(); } }; el('fn-pattern').addEventListener('input',()=>{ state.fnPattern=el('fn-pattern').value; save(); }); }
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
 el('dl').onclick=async()=>{
   if(!templates.length){toast('テンプレートを読み込んでください');return;}
@@ -319,14 +340,14 @@ el('dl').onclick=async()=>{
       btn.textContent='作成中…';
       const r=valid[0]; const t=templates[r.tpl?+r.tpl:0]||templates[0];
       const buf=await fillTemplate(t.buf, valsFor(r));
-      dl(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), `${safe(comp)}_${safe(md)}_${safe(r.home)}vs${safe(r.away)}.xlsx`);
+      dl(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), fileNameFor(r));
     } else {
       const zip=new JSZip(); const seen={};
       for(let i=0;i<total;i++){
         btn.textContent=`作成中… ${i+1}/${total}`;
         const r=valid[i]; const t=templates[r.tpl?+r.tpl:0]||templates[0];
         const buf=await fillTemplate(t.buf, valsFor(r));
-        let nm=`${safe(comp)}_${safe(md)}_${safe(r.home)}vs${safe(r.away)}.xlsx`;
+        let nm=fileNameFor(r);
         if(seen[nm]){seen[nm]++; nm=nm.replace('.xlsx',`_${seen[nm]}.xlsx`);} else seen[nm]=1;
         zip.file(nm, buf);
       }
@@ -343,7 +364,7 @@ let toastT;
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
 
 function renderAll(){
-  fillCommon(); renderSeasonTable(); renderTeamTable(); renderCompTable(); renderTemplates();
+  fillCommon(); renderSeasonTable(); renderTeamTable(); renderCompTable(); renderTemplates(); initFilename();
   if(!rows.length){ addRow({home:'ドルトムント',away:'ベンフィカ'}); } else { renderRows(); }
 }
 renderAll();

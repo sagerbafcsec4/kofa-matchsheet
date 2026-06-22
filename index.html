@@ -94,7 +94,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <ul class="tpllist" id="tpl-list"></ul>
       <div class="rowbtns"><button class="btn" id="dl-sample">サンプル書式（スタメン）をダウンロード</button></div>
       <p class="hint">テンプレートのセルに <span class="ph">{{HOME_TEAM}}</span><span class="ph">{{AWAY_TEAM}}</span><span class="ph">{{HOME_STADIUM}}</span> などを書いておくと差し替わります（全シート対象・書式そのまま）。一覧は「使い方」タブ。</p>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;font-weight:700;color:#475569;cursor:pointer"><input type="checkbox" id="use-venue2"> 会場②（代替名）を使う（オフ＝会場①）</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;font-weight:700;color:#475569;cursor:pointer"><input type="checkbox" id="use-venue2"> ホームスタジアム②を使う</label>
     </div>
 
     <div class="card">
@@ -152,11 +152,11 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
     </div>
     <div class="card">
       <h2>チーム登録</h2>
-      <p class="hint">ホーム会場を①②に登録（②は別名や代替会場用。任意）。対戦表でどちらを使うか選べます。</p>
+      <p class="hint">ホームスタジアムを①②に登録（②は別名や代替名用。任意）。</p>
       <div class="rowbtns"><button class="btn primary" id="add-team">＋ チームを追加</button><button class="btn danger" id="reset">初期データに戻す</button></div>
       <div class="tbl-scroll">
         <table id="team-table">
-          <thead><tr><th>大会</th><th>チーム名</th><th>国</th><th>都市</th><th>ホーム会場①</th><th>ホーム会場②</th><th></th></tr></thead>
+          <thead><tr><th>大会</th><th>チーム名</th><th>国</th><th>都市</th><th>ホームスタジアム①</th><th>ホームスタジアム②</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>

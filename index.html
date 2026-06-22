@@ -100,7 +100,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <h2><span class="step">2</span>共通設定</h2>
       <div class="grid">
         <div class="field"><label>シーズン</label><select id="c-season"></select></div>
-        <div class="field"><label>大会名 <span id="comp-badge"></span></label><select id="c-comp"></select></div>
+        <div class="field"><label>大会名</label><select id="c-comp"></select></div>
         <div class="field"><label>第●節</label><select id="c-md"></select></div>
       </div>
     </div>
@@ -151,20 +151,20 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
     </div>
     <div class="card">
       <h2>チーム登録</h2>
-      <p class="hint">スタジアム名は「通常（ネーミングライツ名）」と「欧州カップ戦用（代替名）」を登録。欧州用が空なら通常を使用します。</p>
+      <p class="hint">ホーム会場を①②に登録（②は別名や代替会場用。任意）。対戦表でどちらを使うか選べます。</p>
       <div class="rowbtns"><button class="btn primary" id="add-team">＋ チームを追加</button><button class="btn danger" id="reset">初期データに戻す</button></div>
       <div class="tbl-scroll">
         <table id="team-table">
-          <thead><tr><th>大会</th><th>チーム名</th><th>国</th><th>都市</th><th>スタジアム名（通常）</th><th>スタジアム名（欧州用）</th><th></th></tr></thead>
+          <thead><tr><th>大会</th><th>チーム名</th><th>国</th><th>都市</th><th>ホーム会場①</th><th>ホーム会場②</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
     <div class="card">
       <h2>大会登録</h2>
-      <p class="hint">種別で「国内リーグ＝都市のみ」「欧州カップ戦＝国＋都市」に地名表記が自動切替されます。</p>
+      <p class="hint">大会名を登録すると「共通設定」の大会名で選べます。</p>
       <div class="rowbtns"><button class="btn primary" id="add-comp">＋ 大会を追加</button></div>
-      <table id="comp-table"><thead><tr><th>大会名</th><th>種別</th><th></th></tr></thead><tbody></tbody></table>
+      <table id="comp-table"><thead><tr><th>大会名</th><th></th></tr></thead><tbody></tbody></table>
     </div>
   </div>
 
@@ -179,16 +179,16 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <table style="margin-top:6px">
         <tbody>
         <tr><td><span class="ph">{{HOME_TEAM}}</span></td><td>ホームチーム名</td><td><span class="ph">{{AWAY_TEAM}}</span></td><td>アウェイチーム名</td></tr>
-        <tr><td><span class="ph">{{HOME_STADIUM}}</span></td><td>ホームのスタジアム名</td><td><span class="ph">{{AWAY_STADIUM}}</span></td><td>アウェイのスタジアム名</td></tr>
+        <tr><td><span class="ph">{{HOME_STADIUM}}</span></td><td>ホームの会場①</td><td><span class="ph">{{AWAY_STADIUM}}</span></td><td>アウェイの会場①</td></tr>
         <tr><td><span class="ph">{{HOME_CITY}}</span></td><td>ホームの都市</td><td><span class="ph">{{AWAY_CITY}}</span></td><td>アウェイの都市</td></tr>
         <tr><td><span class="ph">{{HOME_COUNTRY}}</span></td><td>ホームの国</td><td><span class="ph">{{AWAY_COUNTRY}}</span></td><td>アウェイの国</td></tr>
         <tr><td><span class="ph">{{COMPETITION}}</span></td><td>大会名</td><td><span class="ph">{{SEASON}}</span></td><td>シーズン</td></tr>
         <tr><td><span class="ph">{{MATCHDAY}}</span></td><td>第●節</td><td><span class="ph">{{KICKOFF}}</span></td><td>キックオフ時刻</td></tr>
-        <tr><td><span class="ph">{{VENUE}}</span></td><td>会場（地名つき）</td><td><span class="ph">{{DATE}}</span></td><td>開催日（2025年09月16日(火)）</td></tr>
+        <tr><td><span class="ph">{{VENUE}}</span></td><td>対戦表で選んだ会場（①/②/中立地）</td><td><span class="ph">{{DATE}}</span></td><td>開催日（2025年09月16日(火)）</td></tr>
         <tr><td><span class="ph">{{DATE8}}</span></td><td>開催日8桁（20250916）</td><td></td><td></td></tr>
         </tbody>
       </table>
-      <p class="hint">{{HOME_STADIUM}}＝ホームチームのスタジアム、{{AWAY_STADIUM}}＝アウェイチームのスタジアム（どちらもデータ管理の登録から自動取得）。{{VENUE}}＝会場（地名つき・中立地は手入力分）。</p>
+      <p class="hint">{{HOME_STADIUM}}＝ホームの会場①、{{AWAY_STADIUM}}＝アウェイの会場①（データ管理の登録から取得）。{{VENUE}}＝対戦表の「会場」で選んだもの（①/②、または手入力した中立地）。地名を出したいときは {{VENUE}}（{{HOME_CITY}}）のように組み合わせられます。</p>
       <p class="hint">例：タイトルのセルに <span class="ph">{{COMPETITION}}{{SEASON}}</span> 第 <span class="ph">{{MATCHDAY}}</span> 節、のように複数を1セルに並べてもOKです。</p>
     </div>
   </div>
@@ -223,13 +223,13 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 
 function el(id){return document.getElementById(id);}
 function opt(v,t){const o=document.createElement('option');o.value=v;o.textContent=t||v;return o;}
-function compType(name){const c=state.competitions.find(c=>c.name===name);return c?c.type:'欧州カップ戦';}
+// 大会の種別は廃止
 function teamObj(name){return state.teams.find(t=>t.name===name);}
 function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
-function stadFor(t){ if(!t) return ''; const cat=compType(el('c-comp').value); return cat==='国内リーグ' ? (t.normal||'') : (t.euro||t.normal||''); }
-function locFor(t){ if(!t) return ''; const cat=compType(el('c-comp').value); return cat==='国内リーグ' ? (t.city||'') : ((t.country||'')+'・'+(t.city||'')); }
-function autoVenue(home){ const t=teamObj(home); if(!t) return ''; const s=stadFor(t); return s? s+'（'+locFor(t)+'）':''; }
+function stadFor(t){ return (t&&t.normal)||''; }
+function venueOptions(r,t){ const s1=(t&&t.normal)||'',s2=(t&&t.euro)||''; let h=`<option value="" ${(r.venuesel==null||r.venuesel==='')?'selected':''}>①: ${esc(s1)||'（未登録）'}</option>`; if(s2) h+=`<option value="2" ${r.venuesel==='2'?'selected':''}>②: ${esc(s2)}</option>`; h+=`<option value="manual" ${r.venuesel==='manual'?'selected':''}>手入力（中立地）</option>`; return h; }
+function venueOf(r){ const t=teamObj(r.home)||{}; if(r.venuesel==='manual') return (r.venuetext||'').trim(); if(r.venuesel==='2') return t.euro||t.normal||''; return t.normal||''; }
 function fmtDate(v){ if(!v) return ''; const d=new Date(v+'T00:00:00'); if(isNaN(d)) return ''; const mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return d.getFullYear()+'年'+mm+'月'+dd+'日('+WD[d.getDay()]+')'; }
 
 function fillCommon(){
@@ -238,9 +238,7 @@ function fillCommon(){
   const md=el('c-md'); md.innerHTML=''; DEFAULT_DATA.matchdays.forEach(m=>md.appendChild(opt(m)));
   if([...se.options].some(o=>o.value==='25/26')) se.value='25/26';
   if([...co.options].some(o=>o.value==='UEFAチャンピオンズリーグ')) co.value='UEFAチャンピオンズリーグ';
-  updateBadge();
 }
-function updateBadge(){ const cat=compType(el('c-comp').value); el('comp-badge').innerHTML = cat==='国内リーグ' ? '<span class="badge dom">国内リーグ</span>' : '<span class="badge euro">欧州カップ戦</span>'; }
 
 function mdOptions(sel){ let h='<option value="">（共通）</option>'; DEFAULT_DATA.matchdays.forEach(m=>{h+=`<option ${m===sel?'selected':''}>${esc(m)}</option>`;}); return h; }
 function seasonOptions(sel){ let h='<option value="">（共通）</option>'; state.seasons.forEach(s=>{h+=`<option ${s===sel?'selected':''}>${esc(s)}</option>`;}); return h; }
@@ -264,7 +262,7 @@ function renderRows(){
       <td><input type="time" data-i="${i}" data-k="ko" value="${esc(r.ko)}" style="width:92px"></td>
       <td><select data-i="${i}" data-k="home">${teamOptions(r.home)}</select></td>
       <td><select data-i="${i}" data-k="away">${teamOptions(r.away)}</select></td>
-      <td><input type="text" data-i="${i}" data-k="venue" value="${esc(r.venue)}" placeholder="${esc(autoVenue(r.home))}"></td>
+      <td><select data-i="${i}" data-k="venuesel">${venueOptions(r, teamObj(r.home))}</select><input type="text" data-i="${i}" data-k="venuetext" value="${esc(r.venuetext)}" placeholder="中立地の会場名" style="margin-top:4px;display:${r.venuesel==='manual'?'block':'none'}"></td>
       <td><select data-i="${i}" data-k="md">${mdOptions(r.md)}</select></td>
       <td><select data-i="${i}" data-k="season">${seasonOptions(r.season)}</select></td>
       <td><select data-i="${i}" data-k="tpl">${tplOptions(r.tpl)}</select></td>
@@ -272,22 +270,21 @@ function renderRows(){
     tb.appendChild(tr);
   });
 }
-function updateVenuePlaceholders(){ el('match-table').querySelectorAll('input[data-k="venue"]').forEach(inp=>{ inp.placeholder=autoVenue(rows[+inp.dataset.i].home); }); }
-function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venue:'',tpl:'',md:'',season:''}, data||{})); renderRows(); }
+function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venuesel:'',venuetext:'',tpl:'',md:'',season:''}, data||{})); renderRows(); }
 
 el('match-table').addEventListener('input',e=>{
   const i=e.target.dataset.i,k=e.target.dataset.k; if(i==null)return;
   rows[i][k]=e.target.value;
-  if(k==='home') e.target.closest('tr').querySelector('input[data-k="venue"]').placeholder=autoVenue(e.target.value);
+  if(k==='home'){ rows[i].venuesel=''; renderRows(); }
+  else if(k==='venuesel'){ renderRows(); }
 });
 el('match-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){rows.splice(+e.target.dataset.del,1); renderRows();}});
 el('add-row').onclick=()=>addRow();
 el('clear-rows').onclick=()=>{ if(confirm('対戦リストを全て消去しますか？')){ rows=[]; addRow(); } };
-el('c-comp').addEventListener('change',()=>{updateBadge(); updateVenuePlaceholders();});
 el('paste-add').onclick=()=>{
   const txt=el('paste-box').value.trim(); if(!txt) return; let n=0;
   txt.split(/\r?\n/).forEach(line=>{ const p=line.split(/[\t,]/).map(s=>s.trim()); if(!p[0]) return; addRow({home:p[0]||'',away:p[1]||'',date:p[2]||'',ko:p[3]||'21:00'}); n++; });
-  el('paste-box').value=''; updateVenuePlaceholders(); toast(n+'試合を追加しました');
+  el('paste-box').value=''; toast(n+'試合を追加しました');
 };
 
 // ---- templates upload ----
@@ -306,7 +303,7 @@ function SAMPLE_BUF_COPY(){ return b64ToBuf(SAMPLE_B64); }
 // ---- DB tables ----
 function renderSeasonTable(){ const tb=el('season-table').querySelector('tbody'); tb.innerHTML=''; state.seasons.forEach((s,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-si="${i}" value="${esc(s)}"></td><td class="del" data-dels="${i}">✕</td>`; tb.appendChild(tr); }); }
 function renderTeamTable(){ const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ const tr=document.createElement('tr'); const cs=state.competitions.map(c=>`<option ${c.name===t.comp?'selected':''}>${esc(c.name)}</option>`).join(''); tr.innerHTML=`<td><select data-i="${i}" data-k="comp">${cs}</select></td><td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); }
-function renderCompTable(){ const tb=el('comp-table').querySelector('tbody'); tb.innerHTML=''; state.competitions.forEach((c,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-ci="${i}" data-k="name" value="${esc(c.name)}"></td><td><select data-ci="${i}" data-k="type"><option ${c.type==='国内リーグ'?'selected':''}>国内リーグ</option><option ${c.type==='欧州カップ戦'?'selected':''}>欧州カップ戦</option></select></td><td class="del" data-delc="${i}">✕</td>`; tb.appendChild(tr); }); }
+function renderCompTable(){ const tb=el('comp-table').querySelector('tbody'); tb.innerHTML=''; state.competitions.forEach((c,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-ci="${i}" data-k="name" value="${esc(c.name)}"></td><td class="del" data-delc="${i}">✕</td>`; tb.appendChild(tr); }); }
 el('season-table').addEventListener('input',e=>{const i=e.target.dataset.si; if(i!=null){state.seasons[i]=e.target.value; save(); fillCommon();}});
 el('season-table').addEventListener('click',e=>{if(e.target.dataset.dels!=null){state.seasons.splice(+e.target.dataset.dels,1); save(); renderSeasonTable(); fillCommon();}});
 el('add-season').onclick=()=>{state.seasons.push('28/29'); save(); renderSeasonTable(); fillCommon();};
@@ -315,7 +312,7 @@ el('team-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){sta
 el('comp-table').addEventListener('input',e=>{const i=e.target.dataset.ci,k=e.target.dataset.k; if(i!=null){state.competitions[i][k]=e.target.value; save(); fillCommon();}});
 el('comp-table').addEventListener('click',e=>{if(e.target.dataset.delc!=null){state.competitions.splice(+e.target.dataset.delc,1); save(); renderCompTable(); fillCommon();}});
 el('add-team').onclick=()=>{state.teams.push({comp:(state.competitions[0]&&state.competitions[0].name)||'',name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); renderTeamTable();};
-el('add-comp').onclick=()=>{state.competitions.push({name:'新規大会',type:'国内リーグ'}); save(); renderCompTable(); fillCommon();};
+el('add-comp').onclick=()=>{state.competitions.push({name:'新規大会'}); save(); renderCompTable(); fillCommon();};
 el('reset').onclick=resetData;
 
 // ---- generate ----
@@ -325,7 +322,7 @@ function valsFor(r){
   const season=r.season||el('c-season').value;
   const md=r.md||el('c-md').value;
   const th=teamObj(r.home)||{}, ta=teamObj(r.away)||{};
-  const venue=(r.venue&&r.venue.trim())?r.venue.trim():autoVenue(r.home);
+  const venue=venueOf(r);
   let ymd=''; if(r.date){const d=new Date(r.date+'T00:00:00'); if(!isNaN(d)) ymd=''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
   return {
     'HOME_TEAM':r.home,'AWAY_TEAM':r.away,

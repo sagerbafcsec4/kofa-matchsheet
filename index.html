@@ -94,6 +94,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
       <ul class="tpllist" id="tpl-list"></ul>
       <div class="rowbtns"><button class="btn" id="dl-sample">サンプル書式（スタメン）をダウンロード</button></div>
       <p class="hint">テンプレートのセルに <span class="ph">{{HOME_TEAM}}</span><span class="ph">{{AWAY_TEAM}}</span><span class="ph">{{VENUE}}</span> などを書いておくと差し替わります（全シート対象・書式そのまま）。一覧は「使い方」タブ。</p>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;font-weight:700;color:#475569;cursor:pointer"><input type="checkbox" id="use-venue2"> {{VENUE}} に「会場②（代替名）」を使う（オフ＝会場①）</label>
     </div>
 
     <div class="card">
@@ -184,11 +185,11 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <tr><td><span class="ph">{{HOME_COUNTRY}}</span></td><td>ホームの国</td><td><span class="ph">{{AWAY_COUNTRY}}</span></td><td>アウェイの国</td></tr>
         <tr><td><span class="ph">{{COMPETITION}}</span></td><td>大会名</td><td><span class="ph">{{SEASON}}</span></td><td>シーズン</td></tr>
         <tr><td><span class="ph">{{MATCHDAY}}</span></td><td>第●節</td><td><span class="ph">{{KICKOFF}}</span></td><td>キックオフ時刻</td></tr>
-        <tr><td><span class="ph">{{VENUE}}</span></td><td>対戦表で選んだ会場（①/②/中立地）</td><td><span class="ph">{{DATE}}</span></td><td>開催日（2025年09月16日(火)）</td></tr>
+        <tr><td><span class="ph">{{VENUE}}</span></td><td>会場（既定①／チェックで②／行で上書き可）</td><td><span class="ph">{{DATE}}</span></td><td>開催日（2025年09月16日(火)）</td></tr>
         <tr><td><span class="ph">{{DATE8}}</span></td><td>開催日8桁（20250916）</td><td></td><td></td></tr>
         </tbody>
       </table>
-      <p class="hint">{{HOME_STADIUM}}＝ホームの会場①、{{AWAY_STADIUM}}＝アウェイの会場①（データ管理の登録から取得）。{{VENUE}}＝対戦表の「会場」で選んだもの（①/②、または手入力した中立地）。地名を出したいときは {{VENUE}}（{{HOME_CITY}}）のように組み合わせられます。</p>
+      <p class="hint">{{HOME_STADIUM}}＝ホームの会場①、{{AWAY_STADIUM}}＝アウェイの会場①。{{VENUE}}＝会場（既定＝会場①。「①フォーマットベース」ブロックの「会場②を使う」にチェックで会場②。対戦表の「会場」欄に入力すればその行だけ上書き＝中立地など）。地名を出したいときは {{VENUE}}（{{HOME_CITY}}）のように組み合わせられます。</p>
       <p class="hint">例：タイトルのセルに <span class="ph">{{COMPETITION}}{{SEASON}}</span> 第 <span class="ph">{{MATCHDAY}}</span> 節、のように複数を1セルに並べてもOKです。</p>
     </div>
   </div>
@@ -228,8 +229,8 @@ function teamObj(name){return state.teams.find(t=>t.name===name);}
 function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
 function stadFor(t){ return (t&&t.normal)||''; }
-function venueOptions(r,t){ const s1=(t&&t.normal)||'',s2=(t&&t.euro)||''; let h=`<option value="" ${(r.venuesel==null||r.venuesel==='')?'selected':''}>①: ${esc(s1)||'（未登録）'}</option>`; if(s2) h+=`<option value="2" ${r.venuesel==='2'?'selected':''}>②: ${esc(s2)}</option>`; h+=`<option value="manual" ${r.venuesel==='manual'?'selected':''}>手入力（中立地）</option>`; return h; }
-function venueOf(r){ const t=teamObj(r.home)||{}; if(r.venuesel==='manual') return (r.venuetext||'').trim(); if(r.venuesel==='2') return t.euro||t.normal||''; return t.normal||''; }
+function autoVenueFor(t){ if(!t) return ''; return (state.useVenue2 && t.euro) ? t.euro : (t.normal||''); }
+function venueOf(r){ const v=(r.venue||'').trim(); return v ? v : autoVenueFor(teamObj(r.home)); }
 function fmtDate(v){ if(!v) return ''; const d=new Date(v+'T00:00:00'); if(isNaN(d)) return ''; const mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return d.getFullYear()+'年'+mm+'月'+dd+'日('+WD[d.getDay()]+')'; }
 
 function fillCommon(){
@@ -262,7 +263,7 @@ function renderRows(){
       <td><input type="time" data-i="${i}" data-k="ko" value="${esc(r.ko)}" style="width:92px"></td>
       <td><select data-i="${i}" data-k="home">${teamOptions(r.home)}</select></td>
       <td><select data-i="${i}" data-k="away">${teamOptions(r.away)}</select></td>
-      <td><select data-i="${i}" data-k="venuesel">${venueOptions(r, teamObj(r.home))}</select><input type="text" data-i="${i}" data-k="venuetext" value="${esc(r.venuetext)}" placeholder="中立地の会場名" style="margin-top:4px;display:${r.venuesel==='manual'?'block':'none'}"></td>
+      <td><input type="text" data-i="${i}" data-k="venue" value="${esc(r.venue)}" placeholder="${esc(autoVenueFor(teamObj(r.home)))}"></td>
       <td><select data-i="${i}" data-k="md">${mdOptions(r.md)}</select></td>
       <td><select data-i="${i}" data-k="season">${seasonOptions(r.season)}</select></td>
       <td><select data-i="${i}" data-k="tpl">${tplOptions(r.tpl)}</select></td>
@@ -270,14 +271,14 @@ function renderRows(){
     tb.appendChild(tr);
   });
 }
-function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venuesel:'',venuetext:'',tpl:'',md:'',season:''}, data||{})); renderRows(); }
+function addRow(data){ rows.push(Object.assign({date:'',ko:'21:00',home:'',away:'',venue:'',tpl:'',md:'',season:''}, data||{})); renderRows(); }
 
 el('match-table').addEventListener('input',e=>{
   const i=e.target.dataset.i,k=e.target.dataset.k; if(i==null)return;
   rows[i][k]=e.target.value;
-  if(k==='home'){ rows[i].venuesel=''; renderRows(); }
-  else if(k==='venuesel'){ renderRows(); }
+  if(k==='home') renderRows();
 });
+el('use-venue2').addEventListener('change',()=>{ state.useVenue2=el('use-venue2').checked; save(); renderRows(); });
 el('match-table').addEventListener('click',e=>{if(e.target.dataset.del!=null){rows.splice(+e.target.dataset.del,1); renderRows();}});
 el('add-row').onclick=()=>addRow();
 el('clear-rows').onclick=()=>{ if(confirm('対戦リストを全て消去しますか？')){ rows=[]; addRow(); } };
@@ -384,7 +385,7 @@ let toastT;
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
 
 function renderAll(){
-  fillCommon(); renderSeasonTable(); renderTeamTable(); renderCompTable(); renderTemplates(); initFilename();
+  fillCommon(); renderSeasonTable(); renderTeamTable(); renderCompTable(); renderTemplates(); initFilename(); el('use-venue2').checked=!!state.useVenue2;
   if(!rows.length){ addRow({home:'ドルトムント',away:'ベンフィカ'}); } else { renderRows(); }
 }
 renderAll();

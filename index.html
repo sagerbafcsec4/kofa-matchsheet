@@ -82,7 +82,7 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
 </div>
 <div class="tabs">
   <div class="tab active" data-page="make">フォーマット作成</div>
-  <div class="tab" data-page="db">チーム登録</div>
+  <div class="tab" data-page="db">チーム一覧</div>
   <div class="tab" data-page="help">プレースホルダ</div>
 </div>
 
@@ -149,14 +149,13 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
   <!-- ===== DB ===== -->
   <div class="page" id="page-db">
     <div class="card">
-      <h2>チーム登録</h2>
-      <p class="hint">ホームスタジアムを①②に登録（②は別名や代替名用・任意）。対戦リストで入力したチーム名がここの「チーム名」と一致すると、スタジアム・都市・国が自動で入ります。</p>
-      <div class="rowbtns"><button class="btn primary" id="add-team">＋ チームを追加</button><button class="btn" id="team-save">保存</button><button class="btn" id="csv-btn">CSVで一括登録</button><button class="btn" id="csv-tmpl">CSV雛形</button><button class="btn danger" id="reset">初期データに戻す</button><input type="file" id="csv-file" accept=".csv" style="display:none"></div>
-      <p class="hint">CSVの列順：チーム名, 国, 都市, ホームスタジアム①, ホームスタジアム②（1行目の見出しは任意）。読み込むと既存に追加されます。</p>
-      <input type="text" id="team-search" placeholder="🔍 チーム名で検索（二重登録の確認）" style="margin-top:10px">
+      <h2>チーム一覧（共有シート）</h2>
+      <p class="hint">この一覧は共有スプレッドシートから読み込まれます（閲覧専用）。対戦リストで入力したチーム名がここの「チーム名」と一致すると、スタジアム・都市・国が自動で入ります。チームの追加・修正は管理者がスプレッドシートで行ってください。</p>
+      <div class="rowbtns"><a class="btn primary" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRfxZY4XyfVh5oL7Fk8nTF1wdhDdzcscTlL1ZTVpu2P2hJ_kg-abbu4HFziWrgkRRuTL-Q_TLxzFrlc/pubhtml" target="_blank" rel="noopener">共有シートを開く（閲覧）</a></div>
+      <input type="text" id="team-search" placeholder="🔍 チーム名で検索" style="margin-top:10px">
       <div class="tbl-scroll">
         <table id="team-table">
-          <thead><tr><th data-sort="name" style="width:14%;cursor:pointer">チーム名 <span id="ar-name"></span></th><th data-sort="country" style="width:11%;cursor:pointer">国 <span id="ar-country"></span></th><th style="width:12%">都市</th><th style="width:28.5%">ホームスタジアム①</th><th style="width:28.5%">ホームスタジアム②</th><th style="width:6%"></th></tr></thead>
+          <thead><tr><th data-sort="name" style="width:16%;cursor:pointer">チーム名 <span id="ar-name"></span></th><th data-sort="country" style="width:12%;cursor:pointer">国 <span id="ar-country"></span></th><th style="width:13%">都市</th><th style="width:29.5%">ホームスタジアム①</th><th style="width:29.5%">ホームスタジアム②</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -300,16 +299,10 @@ function updateSortArrows(){ const n=el('ar-name'),c=el('ar-country'); if(n)n.te
 function parseCSV(x){x=String(x).replace(/\r\n/g,'\n').replace(/\r/g,'\n');const rows=[];let f='',row=[],q=false;for(let i=0;i<x.length;i++){const c=x[i];if(q){if(c==='"'){if(x[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else{if(c==='"')q=true;else if(c===',' ){row.push(f);f='';}else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}else f+=c;}}if(f!==''||row.length){row.push(f);rows.push(row);}return rows;}
 function importCSV(txt){const rows=parseCSV(txt).filter(r=>r.some(c=>(c||'').trim()!==''));let s=0;if(rows.length&&/チーム名|name/i.test(rows[0].join(',')))s=1;let n=0;for(let k=s;k<rows.length;k++){const r=rows[k];const name=(r[0]||'').trim();if(!name)continue;state.teams.push({name,country:(r[1]||'').trim(),city:(r[2]||'').trim(),normal:(r[3]||'').trim(),euro:(r[4]||'').trim()});n++;}if(n){save();sortTeams('country',true);renderTeamTable();}toast(n+'件を追加しました');}
 function dlCsvTemplate(){const csv='\ufeffチーム名,国,都市,ホームスタジアム①,ホームスタジアム②\nドルトムント,ドイツ,ドルトムント,シュタディオン・ドルトムント,BVBシュタディオン・ドルトムント\n';dl(new Blob([csv],{type:'text/csv'}),'teams_template.csv');}
-function renderTeamTable(){ updateSortArrows(); const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td><td class="del" data-del="${i}">✕</td>`; tb.appendChild(tr); }); requestAnimationFrame(()=>tb.querySelectorAll('input').forEach(fitFont)); }
+function renderTeamTable(){ updateSortArrows(); const q=(el('team-search').value||'').toLowerCase(); const tb=el('team-table').querySelector('tbody'); tb.innerHTML=''; state.teams.forEach((t,i)=>{ if(q && !((t.name||'').toLowerCase().includes(q))) return; const tr=document.createElement('tr'); tr.innerHTML=`<td><input readonly data-i="${i}" data-k="name" value="${esc(t.name)}"></td><td><input readonly data-i="${i}" data-k="country" value="${esc(t.country)}"></td><td><input readonly data-i="${i}" data-k="city" value="${esc(t.city)}"></td><td><input readonly data-i="${i}" data-k="normal" value="${esc(t.normal)}"></td><td><input readonly data-i="${i}" data-k="euro" value="${esc(t.euro)}"></td>`; tb.appendChild(tr); }); requestAnimationFrame(()=>tb.querySelectorAll('input').forEach(fitFont)); }
 el('team-table').addEventListener('input',e=>{const i=e.target.dataset.i,k=e.target.dataset.k; if(i!=null){state.teams[i][k]=e.target.value; save(); fitFont(e.target);}});
 el('team-table').addEventListener('click',e=>{ const th=e.target.closest('th[data-sort]'); if(th){ const k=th.dataset.sort; teamSort.asc=(teamSort.key===k)?!teamSort.asc:true; teamSort.key=k; sortTeams(k,teamSort.asc); save(); renderTeamTable(); return; } if(e.target.dataset.del!=null){state.teams.splice(+e.target.dataset.del,1); save(); renderTeamTable(); renderRows();} });
-el('add-team').onclick=()=>{state.teams.push({name:'新規チーム',country:'',city:'',normal:'',euro:''}); save(); el('team-search').value=''; renderTeamTable();};
-el('team-save').onclick=()=>{ save(); toast('保存しました'); };
-el('csv-tmpl').onclick=dlCsvTemplate;
-el('csv-btn').onclick=()=>el('csv-file').click();
-el('csv-file').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ const buf=fr.result; let txt=new TextDecoder('utf-8').decode(buf); if(txt.includes('\uFFFD')){ try{txt=new TextDecoder('shift_jis').decode(buf);}catch(_){} } importCSV(txt); }; fr.readAsArrayBuffer(f); e.target.value=''; });
 el('team-search').addEventListener('input',renderTeamTable);
-el('reset').onclick=resetData;
 
 // ---- generate ----
 function safe(s){return (s||'').replace(/[\\/:*?"<>|]/g,'').slice(0,40);}

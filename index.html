@@ -371,7 +371,7 @@ async function saveAsZip(){
     if(files.length===1){ dl(new Blob([files[0].buf],{type:XLSX_MIME}), files[0].nm); }
     else { btn.textContent='ZIP作成中…'; const zip=new JSZip(); files.forEach(f=>zip.file(f.nm,f.buf));
       const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
-      dl(blob, `kofa-matchsheet_${safe(el('c-comp').value)||'match'}.zip`); }
+      dl(blob, `kofa-excel-format_${safe(el('c-comp').value)||'match'}.zip`); }
     toast(files.length+'件を保存しました');
   }catch(err){console.error(err); toast('エラー: '+err.message);}
   btn.disabled=false; btn.textContent=old;

@@ -193,6 +193,7 @@ const DEFAULT_DATA = {"seasons": ["24/25", "25/26", "26/27", "27/28"], "competit
 const SAMPLE_B64 = "";
 const WD = ['日','月','火','水','木','金','土'];
 const LS = 'matchrecord_v1';
+const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfxZY4XyfVh5oL7Fk8nTF1wdhDdzcscTlL1ZTVpu2P2hJ_kg-abbu4HFziWrgkRRuTL-Q_TLxzFrlc/pub?gid=0&single=true&output=csv";
 const COUNTRY_ORDER=['イングランド','スペイン','ドイツ','イタリア','フランス','オランダ','ポルトガル','ベルギー','スコットランド','トルコ','ギリシャ','オーストリア','スイス','デンマーク','ノルウェー','セルビア','クロアチア','チェコ'];
 function countryRank(c){const i=COUNTRY_ORDER.indexOf((c||'').trim());return i<0?999:i;}
 function sortTeams(key,asc){const d=asc?1:-1;state.teams.sort((a,b)=>{if(key==='country'){const r=countryRank(a.country)-countryRank(b.country);if(r)return r*d;const cc=String(a.country||'').localeCompare(String(b.country||''),'ja');if(cc)return cc*d;return String(a.name||'').localeCompare(String(b.name||''),'ja');}return String(a[key]||'').localeCompare(String(b[key]||''),'ja')*d;});}
@@ -209,6 +210,23 @@ function load(){
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
 function save(){localStorage.setItem(LS, JSON.stringify(state)); }
+async function loadSheet(){
+  if(!SHEET_CSV) return;
+  try{
+    const res = await fetch(SHEET_CSV, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const txt = await res.text();
+    const rows = parseCSV(txt).filter(r=>r.some(c=>(c||'').trim()!==''));
+    if(rows.length<2) return;
+    let s=0; if(/チーム名|name/i.test(rows[0].join(','))) s=1;
+    const list=[];
+    for(let k=s;k<rows.length;k++){const r=rows[k];const name=(r[0]||'').trim();if(!name)continue;
+      list.push({name,country:(r[1]||'').trim(),city:(r[2]||'').trim(),normal:(r[3]||'').trim(),euro:(r[4]||'').trim()});}
+    if(!list.length) return;
+    state.teams = list; save(); sortTeams('country',true); renderTeamTable(); renderRows();
+    toast(list.length+'チームを共有シートから読み込みました');
+  }catch(e){ console.warn('シート読み込み失敗', e); }
+}
 function resetData(){ if(confirm('チーム・大会・シーズンを初期データに戻します。よろしいですか？')){ state=JSON.parse(JSON.stringify(DEFAULT_DATA)); save(); renderAll(); toast('初期データに戻しました'); } }
 
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
@@ -367,6 +385,7 @@ function renderAll(){
   if(!rows.length){ addRow({home:'ドルトムント',away:'ベンフィカ'}); } else { renderRows(); }
 }
 renderAll();
+loadSheet();
 </script>
 </body>
 </html>

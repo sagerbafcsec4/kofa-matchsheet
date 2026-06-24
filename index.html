@@ -133,10 +133,9 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
     <div class="card">
       <h2><span class="step">3</span>対戦リスト（何試合でも）</h2>
       <div class="grid">
-        <div class="field"><label>ファイル名プリセット</label><select id="fn-preset"></select></div>
-        <div class="field" style="grid-column:2/4"><label>各ファイル名の書式（共通）</label><input type="text" id="fn-pattern"></div>
+        <div class="field"><label>ファイル名（共通）</label><select id="fn-preset"></select></div>
+        <div class="field" style="grid-column:2/4"><label>ファイル名</label><input type="text" id="fn-pattern"></div>
       </div>
-      <div class="rowbtns"><button class="btn" id="fn-add">＋ 現在の書式をプリセットに登録</button><button class="btn danger" id="fn-del">選択中のプリセットを削除</button></div>
       <p class="hint">{ } で囲んだトークンがファイル名に入ります（例：{HOME_TEAM}）。各行で個別指定も可。一覧は「プレースホルダ」タブ。拡張子.xlsxは自動付与。</p>
       <div class="tbl-scroll"><div id="match-list" class="matchlist"></div></div>
       <div class="rowbtns">
@@ -353,11 +352,11 @@ async function fillTemplate(buf, vals){
 }
 const DEFAULT_PRESETS=['【試合記録】{COMPETITION}{MATCHDAY}_{HOME_TEAM}対{AWAY_TEAM}','【試合記録】{HOME_TEAM}対{AWAY_TEAM}'];
 function fnPresets(){ if(!state.fnPresets||!state.fnPresets.length) state.fnPresets=DEFAULT_PRESETS.slice(); return state.fnPresets; }
-function buildPresetOptions(){ const ps=el('fn-preset'); const cur=ps.value; ps.innerHTML='<option value="">プリセットを選ぶ…</option>'; fnPresets().forEach(p=>ps.appendChild(opt(p))); ps.value=cur; }
+function buildPresetOptions(){ const ps=el('fn-preset'); const cur=ps.value; ps.innerHTML='<option value="">オプションから選ぶ…</option>'; fnPresets().forEach(p=>ps.appendChild(opt(p))); ps.value=cur; }
 function safeName(s){return (s||'').replace(/[\\/:*?"<>|]/g,'').slice(0,120);}
 function applyPattern(pat,vals){ return pat.replace(/\{([^}]+)\}/g,(m,k)=> (k.trim() in vals)? vals[k.trim()] : m); }
 function fileNameFor(r){ let pat=(r.fnSel==='__custom__')?(r.fnText||''):(r.fnSel||''); if(!pat) pat=el('fn-pattern').value||fnPresets()[0]; let n=safeName(applyPattern(pat,valsFor(r))); if(!n) n='match'; return n+'.xlsx'; }
-function initFilename(){ buildPresetOptions(); el('fn-pattern').value=state.fnPattern||fnPresets()[0]; el('fn-preset').onchange=()=>{ const v=el('fn-preset').value; if(v){ el('fn-pattern').value=v; state.fnPattern=v; save(); } }; el('fn-pattern').oninput=()=>{ state.fnPattern=el('fn-pattern').value; save(); }; el('fn-add').onclick=()=>{ const v=el('fn-pattern').value.trim(); if(!v){toast('書式を入力してください');return;} if(!fnPresets().includes(v)){ fnPresets().push(v); save(); buildPresetOptions(); } el('fn-preset').value=v; toast('プリセットに登録しました'); }; el('fn-del').onclick=()=>{ const v=el('fn-preset').value; if(!v){toast('削除するプリセットを選んでください');return;} const i=fnPresets().indexOf(v); if(i>=0){ fnPresets().splice(i,1); save(); buildPresetOptions(); el('fn-preset').value=''; toast('削除しました'); } }; }
+function initFilename(){ buildPresetOptions(); el('fn-pattern').value=state.fnPattern||fnPresets()[0]; el('fn-preset').onchange=()=>{ const v=el('fn-preset').value; if(v){ el('fn-pattern').value=v; state.fnPattern=v; save(); } }; el('fn-pattern').oninput=()=>{ state.fnPattern=el('fn-pattern').value; save(); }; }
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
 const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 async function buildAll(){

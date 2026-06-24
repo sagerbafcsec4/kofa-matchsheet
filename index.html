@@ -118,7 +118,6 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <input type="file" id="file" accept=".xlsx" multiple style="display:none">
       </label>
       <ul class="tpllist" id="tpl-list"></ul>
-      <p class="hint">フォーマットベースのセルに {{プレースホルダ}} を書いておくと差し替わります（全シート対象・書式そのまま）。一覧は「プレースホルダ」タブ。</p>
     </div>
 
     <div class="card">
@@ -136,7 +135,6 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <div class="field"><label>ファイル名（共通）</label><select id="fn-preset"></select></div>
         <div class="field" style="grid-column:2/4"><label>ファイル名</label><input type="text" id="fn-pattern"></div>
       </div>
-      <p class="hint">{ } で囲んだトークンがファイル名に入ります（例：{HOME_TEAM}）。各行で個別指定も可。一覧は「プレースホルダ」タブ。拡張子.xlsxは自動付与。</p>
       <div class="tbl-scroll"><div id="match-list" class="matchlist"></div></div>
       <div class="rowbtns">
         <button class="btn primary" id="add-row">＋ 行を追加</button>

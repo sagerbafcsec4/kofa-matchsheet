@@ -132,6 +132,12 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
 
     <div class="card">
       <h2><span class="step">3</span>対戦リスト（何試合でも）</h2>
+      <div class="grid">
+        <div class="field"><label>ファイル名プリセット</label><select id="fn-preset"></select></div>
+        <div class="field" style="grid-column:2/4"><label>各ファイル名の書式（共通）</label><input type="text" id="fn-pattern"></div>
+      </div>
+      <div class="rowbtns"><button class="btn" id="fn-add">＋ 現在の書式をプリセットに登録</button><button class="btn danger" id="fn-del">選択中のプリセットを削除</button></div>
+      <p class="hint">{ } で囲んだトークンがファイル名に入ります（例：{HOME_TEAM}）。各行で個別指定も可。一覧は「プレースホルダ」タブ。拡張子.xlsxは自動付与。</p>
       <div class="tbl-scroll"><div id="match-list" class="matchlist"></div></div>
       <div class="rowbtns">
         <button class="btn primary" id="add-row">＋ 行を追加</button>
@@ -143,18 +149,6 @@ details{margin-top:14px}summary{cursor:pointer;font-size:13px;font-weight:700;co
         <textarea id="paste-box" rows="4" placeholder="ドルトムント,ベンフィカ,2025-09-16,21:00"></textarea>
         <div class="rowbtns"><button class="btn" id="paste-add">貼り付けて追加</button></div>
       </details>
-    </div>
-
-    <div class="card">
-      <h2><span class="step">4</span>ファイル名の書式</h2>
-      <div class="grid">
-        <div class="field"><label>プリセット</label><select id="fn-preset"></select></div>
-        <div class="field" style="grid-column:2/4"><label>各ファイル名の書式</label><input type="text" id="fn-pattern"></div>
-      </div>
-      <div class="rowbtns"><button class="btn" id="fn-add">＋ 現在の書式をプリセットに登録</button><button class="btn danger" id="fn-del">選択中のプリセットを削除</button></div>
-      <div style="display:none">
-      </div>
-      <p class="hint">{ } で囲んだトークンがファイル名に入ります（例：{HOME_TEAM}）。一覧は「プレースホルダ」タブ。拡張子.xlsxは自動付与。</p>
     </div>
 
     <div class="dlrow"><button class="dlbtn" id="dl-folder">フォルダを選んで個別に保存</button><button class="dlbtn alt" id="dl-zip">ZIPにまとめて保存</button></div>
